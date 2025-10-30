@@ -1,6 +1,15 @@
 # =========================
 # System / IDE junk
 # =========================
+
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+.env.staging
+.env.ci
+
 .DS_Store
 Thumbs.db
 desktop.ini
