@@ -109,7 +109,7 @@ function createHelpEmbed(client) {
 
   const embed = new EmbedBuilder()
     .setColor(cfg.color)
-    .setTitle(cfg.title)
+    .setTitle(BOT_CONFIG.botName) // ‹--- (แก้ไข) เปลี่ยนจาก cfg.title มาใช้ botName โดยตรง
     .setDescription(cfg.description)
     .addFields(fields)
     .setFooter({ text: cfg.footer })
@@ -127,3 +127,4 @@ module.exports = {
   createErrorEmbed,
   createHelpEmbed,
 };
+

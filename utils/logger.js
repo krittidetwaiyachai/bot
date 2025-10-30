@@ -27,11 +27,17 @@ function getTimestamp() {
  * Logs a successful purchase to logs/purchases.txt
  * @param {import('discord.js').User} discordUser The Discord user who made the purchase
  * @param {string} inGameName The in-game name of the player
- * @param {number} amount The amount of the purchase
+ * @param {number} bahtAmount The amount in Baht
+ * @param {number} pointAmount The calculated points
  */
-async function logPurchase(discordUser, inGameName, amount) {
+async function logPurchase(discordUser, inGameName, bahtAmount, pointAmount) {
   const timestamp = getTimestamp();
-  const logMessage = `[${timestamp}] User: ${discordUser.tag} (ID: ${discordUser.id}) | Player: ${inGameName} | Amount: ${amount} บาท\n`;
+  // (แก้ไข) เพิ่มการแสดงผลทั้ง Baht และ Points
+  const logMessage = `[${timestamp}] User: ${
+    discordUser.tag
+  } (ID: ${
+    discordUser.id
+  }) | Player: ${inGameName} | Amount: ${bahtAmount} บาท (-> ${pointAmount.toLocaleString()} พ้อย)\n`;
 
   try {
     // 1. ตรวจสอบว่ามีโฟลเดอร์ 'logs' หรือยัง ถ้าไม่มีให้สร้าง
@@ -39,7 +45,10 @@ async function logPurchase(discordUser, inGameName, amount) {
 
     // 2. เขียน Log ต่อท้ายไฟล์ (.txt)
     await fs.appendFile(logFile, logMessage, 'utf8');
-    console.log(`(Logger) บันทึกการซื้อสำเร็จ: ${inGameName} - ${amount} บาท`);
+    // (แก้ไข) อัปเดต Console Log
+    console.log(
+      `(Logger) บันทึกการซื้อสำเร็จ: ${inGameName} - ${bahtAmount} บาท -> ${pointAmount} พ้อย`
+    );
   } catch (error) {
     console.error('❌ (Logger) เกิดข้อผิดพลาดในการบันทึก Log:', error);
   }
@@ -48,3 +57,4 @@ async function logPurchase(discordUser, inGameName, amount) {
 module.exports = {
   logPurchase,
 };
+

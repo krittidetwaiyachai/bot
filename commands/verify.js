@@ -1,10 +1,14 @@
 // /commands/verify.js
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder } = require('discord.js'); // ‹--- (แก้ไข) Import EmbedBuilder
 const { verifySlipFromImage } = require('../utils/slipok');
 const { createSuccessEmbed, createErrorEmbed } = require('../utils/embeds');
 const { getInGameName } = require('../utils/database');
-const { RCON_CHANNEL_ID, BOT_CONFIG } = require('../config');
-const { logPurchase } = require('../utils/logger'); // <-- 1. Import Logger
+const {
+  RCON_CHANNEL_ID,
+  POINT_RATE,
+  ADMIN_LOG_CHANNEL_ID,
+} = require('../config'); // ‹--- (แก้ไข) Import POINT_RATE และ ADMIN_LOG_CHANNEL_ID
+const { logPurchase } = require('../utils/logger'); // <-- Import Logger
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -74,23 +78,30 @@ module.exports = {
             throw new Error('ไม่พบช่อง RCON หรือช่องนั้นไม่ใช่ Text Channel');
           }
 
-          const flooredAmount = Math.floor(amount);
-          // สร้างคำสั่ง RCON
-          const rconCommand = `!rcon coinsengine:point give ${inGameName} ${flooredAmount}`;
+          // --- (แก้ไข) คำนวณ Point ---
+          const bahtAmount = Math.floor(amount);
+          const calculatedPoints = bahtAmount * POINT_RATE; // ‹--- คำนวณ (เช่น 10 * 100 = 1000)
+
+          // สร้างคำสั่ง RCON (ใช้ calculatedPoints)
+          const rconCommand = `!rcon coinsengine:point give ${inGameName} ${calculatedPoints}`;
 
           // ส่งเข้าช่อง RCON
           await rconChannel.send(rconCommand);
 
-          // แจ้งผู้ใช้ว่าสำเร็จ
+          // (แก้ไข) แจ้งผู้ใช้ว่าสำเร็จ (ใช้ calculatedPoints)
           embed.addFields({
             name: '💸 สถานะการเติมเงิน',
-            value: `✅ ส่งคำสั่งเติมเงินให้ \`${inGameName}\` จำนวน \`${flooredAmount}\` บาท เรียบร้อย!`,
+            value: `✅ ระบบได้ทำการเติมพ้อยให้ \`${inGameName}\` จำนวน \`${calculatedPoints.toLocaleString()}\` พ้อย เรียบร้อย!`,
           });
 
-          // --- 🌟 2. บันทึก Log การซื้อ ---
-          // (เราจะ log หลังจากส่ง RCON สำเร็จแล้ว)
+          // --- (แก้ไข) บันทึก Log การซื้อ (ส่งค่า cả baht และ points) ---
           try {
-            await logPurchase(interaction.user, inGameName, flooredAmount);
+            await logPurchase(
+              interaction.user,
+              inGameName,
+              bahtAmount,
+              calculatedPoints
+            );
           } catch (logError) {
             // หาก Log พัง ก็ไม่เป็นไร อย่าให้กระทบผู้ใช้งาน
             console.error(
@@ -98,12 +109,56 @@ module.exports = {
               logError
             );
           }
-          // --- 🌟 สิ้นสุดการบันทึก Log ---
+          // --- สิ้นสุดการบันทึก Log ---
+
+          // --- (เพิ่มใหม่) ส่ง Log Embed ไปยังห้อง Admin ---
+          if (ADMIN_LOG_CHANNEL_ID) {
+            try {
+              const adminLogChannel = await interaction.client.channels.fetch(
+                ADMIN_LOG_CHANNEL_ID
+              );
+              if (adminLogChannel && adminLogChannel.isTextBased()) {
+                const adminEmbed = new EmbedBuilder()
+                  .setColor(0x57f287) // สีเขียว
+                  .setTitle('📄 บันทึกการเติมเงิน (แอดมิน)')
+                  .addFields(
+                    {
+                      name: '👤 ผู้ใช้งาน Discord',
+                      value: `${interaction.user.tag} (\`${interaction.user.id}\`)`,
+                      inline: false,
+                    },
+                    {
+                      name: '🎮 ชื่อในเกม',
+                      value: `\`${inGameName}\``,
+                      inline: false,
+                    },
+                    {
+                      name: '💰 จำนวนเงิน (บาท)',
+                      value: `${bahtAmount} บาท`,
+                      inline: true,
+                    },
+                    {
+                      name: '🪙 จำนวน (พ้อย)',
+                      value: `${calculatedPoints.toLocaleString()} พ้อย (Rate: ${POINT_RATE}x)`,
+                      inline: true,
+                    }
+                  )
+                  .setTimestamp();
+                await adminLogChannel.send({ embeds: [adminEmbed] });
+              }
+            } catch (adminLogError) {
+              console.error(
+                '❌ (Admin Log) ส่ง Embed ไปห้องแอดมินล้มเหลว:',
+                adminLogError
+              );
+            }
+          }
+          // --- สิ้นสุดการส่ง Log Admin ---
         } catch (error) {
           console.error('❌ (RCON) ส่งคำสั่งล้มเหลว:', error);
           embed.addFields({
             name: '🔥 สถานะการเติมเงิน',
-            value: `สลิปถูกต้อง แต่การส่งคำสั่ง RCON ล้มเหลว กรุณาติดต่อแอดมิน (โค้ด: RCON_SEND_FAIL)`,
+            value: `สลิปถูกต้อง แต่การเติมพ้อยให้ \`${inGameName}\` ล้มเหลว กรุณาติดต่อแอดมินโดยด่วน!`,
           });
         }
       }
@@ -117,3 +172,4 @@ module.exports = {
     }
   },
 };
+
