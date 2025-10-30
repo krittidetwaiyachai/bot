@@ -1,0 +1,108 @@
+// /commands/verify.js
+const { SlashCommandBuilder } = require('discord.js');
+const { verifySlipFromImage } = require('../utils/slipok');
+const { createSuccessEmbed, createErrorEmbed } = require('../utils/embeds');
+const { getInGameName } = require('../utils/database');
+const { RCON_CHANNEL_ID, BOT_CONFIG } = require('../config');
+
+module.exports = {
+  data: new SlashCommandBuilder()
+    .setName('verify')
+    .setDescription('ตรวจสอบสลิปการโอนเงิน')
+    .addAttachmentOption((option) =>
+      option
+        .setName('slip')
+        .setDescription('รูปภาพสลิปการโอนเงิน')
+        .setRequired(true)
+    ),
+
+  async execute(interaction) {
+    const attachment = interaction.options.getAttachment('slip');
+
+    // --- เช็กไฟล์ ---
+    if (
+      !attachment.contentType ||
+      !attachment.contentType.startsWith('image/')
+    ) {
+      await interaction.reply({
+        content: '❌ กรุณาอัพโหลดไฟล์รูปภาพเท่านั้น (JPG, PNG, JPEG, WEBP)',
+        ephemeral: true,
+      });
+      return;
+    }
+
+    // --- ตอบกลับแบบลับ (ephemeral) เสมอ ---
+    await interaction.deferReply({ ephemeral: true });
+
+    // --- 1. ตรวจสอบสลิป ---
+    const result = await verifySlipFromImage(attachment.url, null);
+
+    // --- 2. ถ้าสลิปผ่าน (Success) ---
+    if (result.success) {
+      const slipData = result.data;
+      const discordId = interaction.user.id;
+      const amount = slipData.amount; // ดึงยอดเงินจากสลิป
+
+      // สร้าง Embed พื้นฐาน
+      const embed = createSuccessEmbed(slipData);
+
+      // --- 3. ค้นหาชื่อในเกมจาก DB ---
+      const inGameName = await getInGameName(discordId);
+
+      if (!inGameName) {
+        // --- 3.1 ไม่พบชื่อใน DB ---
+        embed.addFields({
+          name: '⚠️ สถานะการเติมเงิน',
+          value: 'สลิปถูกต้อง แต่ไม่พบชื่อของคุณในฐานข้อมูล! กรุณาติดต่อแอดมินเพื่อเชื่อมต่อบัญชี',
+        });
+      } else if (!amount || amount <= 0) {
+        // --- 3.2 สลิปไม่มียอดเงิน (หรืออ่านไม่ได้) ---
+        embed.addFields({
+          name: '⚠️ สถานะการเติมเงิน',
+          value: `สลิปถูกต้อง แต่ไม่สามารถอ่านยอดเงินได้ (ยอด ${amount} บาท)`,
+        });
+      } else {
+        // --- 3.3 พบชื่อ และ มียอดเงิน -> ส่ง RCON ---
+        try {
+          const rconChannel = await interaction.client.channels.fetch(
+            RCON_CHANNEL_ID
+          );
+
+          if (!rconChannel || !rconChannel.isTextBased()) {
+            throw new Error('ไม่พบช่อง RCON หรือช่องนั้นไม่ใช่ Text Channel');
+          }
+
+          // สร้างคำสั่ง RCON (ใช้ Math.floor กันเหนียว เผื่อยอดเงินเป็นทศนิยม)
+          const rconCommand = `!rcon coinsengine:point give ${inGameName} ${Math.floor(
+            amount
+          )}`;
+
+          // ส่งเข้าช่อง RCON
+          await rconChannel.send(rconCommand);
+
+          // แจ้งผู้ใช้ว่าสำเร็จ
+          embed.addFields({
+            name: '💸 สถานะการเติมเงิน',
+            value: `✅ ส่งคำสั่งเติมเงินให้ \`${inGameName}\` จำนวน \`${Math.floor(
+              amount
+            )}\` บาท เรียบร้อย!`,
+          });
+        } catch (error) {
+          console.error('❌ (RCON) ส่งคำสั่งล้มเหลว:', error);
+          embed.addFields({
+            name: '🔥 สถานะการเติมเงิน',
+            value: `สลิปถูกต้อง แต่การส่งคำสั่ง RCON ล้มเหลว กรุณาติดต่อแอดมิน (โค้ด: RCON_SEND_FAIL)`,
+          });
+        }
+      }
+
+      // --- 4. ตอบกลับผู้ใช้ (แบบลับ) ---
+      await interaction.editReply({ embeds: [embed] });
+    } else {
+      // --- 5. ถ้าสลิปล้มเหลว (Error) ---
+      // (แก้บั๊กเล็กน้อยจากโค้ดก่อนหน้า)
+      const embed = createErrorEmbed(result.error.error || result.error);
+      await interaction.editReply({ embeds: [embed] });
+    }
+  },
+};
