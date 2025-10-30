@@ -5,7 +5,7 @@ const { createHelpEmbed } = require('../utils/embeds');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('help')
-    .setDescription('แสดงหน้าต่างช่วยเหลือและวิธีใช้งาน '),
+    .setDescription('แสดงหน้าต่างช่วยเหลือและวิธีใช้งาน'),
 
   async execute(interaction) {
     // สร้าง Embed จากฟังก์ชันกลาง
