@@ -19,11 +19,11 @@ try {
  */
 async function getInGameName(discordId) {
   // ------------------------------------------------------------------
-  // ‼️ --- สำคัญ: แก้ไขชื่อตารางและคอลัมน์ให้ตรงกับ DB ของคุณ --- ‼️
+  // ‼️ --- อัปเดตตามโครงสร้าง DB ที่ยืนยันแล้ว --- ‼️
   //
-  // สมมติ: ตารางชื่อ 'users', คอลัมน์ไอดีดิสคอร์ด 'discord_id', คอลัมน์ชื่อในเกม 'username'
+  // ตาราง: 'hyperserverabiplayers', คอลัมน์ไอดีดิสคอร์ด 'discord_id', คอลัมน์ชื่อในเกม 'name'
   //
-  const SQL = 'SELECT username FROM users WHERE discord_id = ?';
+  const SQL = 'SELECT name FROM hyperserverabiplayers WHERE discord_id = ?'; // <--- ถูกต้อง
   //
   // ------------------------------------------------------------------
 
@@ -31,8 +31,8 @@ async function getInGameName(discordId) {
     const [rows] = await pool.query(SQL, [discordId]);
 
     if (rows && rows.length > 0) {
-      // ‼️ --- แก้ 'username' ให้ตรงกับชื่อคอลัมน์ของคุณ --- ‼️
-      return rows[0].username;
+      // ‼️ --- อัปเดตตามโครงสร้าง DB ที่ยืนยันแล้ว --- ‼️
+      return rows[0].name; // <--- ถูกต้อง
     } else {
       // ไม่พบผู้ใช้
       return null;
@@ -62,8 +62,8 @@ async function checkDbConnection() {
 }
 
 async function getAllPlayers() {
-  // ‼️ --- แก้ไข 'users' เป็นชื่อตารางของคุณ --- ‼️
-  const SQL = 'SELECT * FROM users'; 
+  // ‼️ --- อัปเดตตามโครงสร้าง DB ที่ยืนยันแล้ว --- ‼️
+  const SQL = 'SELECT * FROM hyperserverabiplayers'; // <--- ถูกต้อง
 
   try {
     const [rows] = await pool.query(SQL);
