@@ -4,6 +4,7 @@ const { verifySlipFromImage } = require('../utils/slipok');
 const { createSuccessEmbed, createErrorEmbed } = require('../utils/embeds');
 const { getInGameName } = require('../utils/database');
 const { RCON_CHANNEL_ID, BOT_CONFIG } = require('../config');
+const { logPurchase } = require('../utils/logger'); // <-- 1. Import Logger
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -53,7 +54,8 @@ module.exports = {
         // --- 3.1 ไม่พบชื่อใน DB ---
         embed.addFields({
           name: '⚠️ สถานะการเติมเงิน',
-          value: 'สลิปถูกต้อง แต่ไม่พบชื่อของคุณในฐานข้อมูล! กรุณาติดต่อแอดมินเพื่อเชื่อมต่อบัญชี',
+          value:
+            'สลิปถูกต้อง แต่ไม่พบชื่อของคุณในฐานข้อมูล! กรุณาติดต่อแอดมินเพื่อเชื่อมต่อบัญชี',
         });
       } else if (!amount || amount <= 0) {
         // --- 3.2 สลิปไม่มียอดเงิน (หรืออ่านไม่ได้) ---
@@ -72,10 +74,9 @@ module.exports = {
             throw new Error('ไม่พบช่อง RCON หรือช่องนั้นไม่ใช่ Text Channel');
           }
 
-          // สร้างคำสั่ง RCON (ใช้ Math.floor กันเหนียว เผื่อยอดเงินเป็นทศนิยม)
-          const rconCommand = `!rcon coinsengine:point give ${inGameName} ${Math.floor(
-            amount
-          )}`;
+          const flooredAmount = Math.floor(amount);
+          // สร้างคำสั่ง RCON
+          const rconCommand = `!rcon coinsengine:point give ${inGameName} ${flooredAmount}`;
 
           // ส่งเข้าช่อง RCON
           await rconChannel.send(rconCommand);
@@ -83,10 +84,21 @@ module.exports = {
           // แจ้งผู้ใช้ว่าสำเร็จ
           embed.addFields({
             name: '💸 สถานะการเติมเงิน',
-            value: `✅ ส่งคำสั่งเติมเงินให้ \`${inGameName}\` จำนวน \`${Math.floor(
-              amount
-            )}\` บาท เรียบร้อย!`,
+            value: `✅ ส่งคำสั่งเติมเงินให้ \`${inGameName}\` จำนวน \`${flooredAmount}\` บาท เรียบร้อย!`,
           });
+
+          // --- 🌟 2. บันทึก Log การซื้อ ---
+          // (เราจะ log หลังจากส่ง RCON สำเร็จแล้ว)
+          try {
+            await logPurchase(interaction.user, inGameName, flooredAmount);
+          } catch (logError) {
+            // หาก Log พัง ก็ไม่เป็นไร อย่าให้กระทบผู้ใช้งาน
+            console.error(
+              '❌ (Logger) บันทึก Log ล้มเหลว (แต่การเติมเงินสำเร็จ):',
+              logError
+            );
+          }
+          // --- 🌟 สิ้นสุดการบันทึก Log ---
         } catch (error) {
           console.error('❌ (RCON) ส่งคำสั่งล้มเหลว:', error);
           embed.addFields({
@@ -100,7 +112,6 @@ module.exports = {
       await interaction.editReply({ embeds: [embed] });
     } else {
       // --- 5. ถ้าสลิปล้มเหลว (Error) ---
-      // (แก้บั๊กเล็กน้อยจากโค้ดก่อนหน้า)
       const embed = createErrorEmbed(result.error.error || result.error);
       await interaction.editReply({ embeds: [embed] });
     }

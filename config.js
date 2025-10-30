@@ -6,7 +6,11 @@ const DISCORD_TOKEN = process.env.DISCORD_BOT_TOKEN;
 const CLIENT_ID = process.env.DISCORD_CLIENT_ID;
 const PANEL_CHANNEL_ID = process.env.PANEL_CHANNEL_ID;
 const RCON_CHANNEL_ID = process.env.RCON_CHANNEL_ID;
-const EXPORT_CHANNEL_ID = process.env.EXPORT_CHANNEL_ID; 
+const EXPORT_CHANNEL_ID = process.env.EXPORT_CHANNEL_ID;
+// --- 1.1 (เพิ่มใหม่) โหลด POINT_RATE ---
+const POINT_RATE = process.env.POINT_RATE
+  ? parseInt(process.env.POINT_RATE, 10)
+  : 100; // ‹--- ถ้าไม่เจอใน .env ให้ใช้ 100 เป็นค่าเริ่มต้น
 
 const DB_CONFIG = {
   host: process.env.DB_HOST,
@@ -30,7 +34,7 @@ const SLIPOK_CONFIG = {
 
 // --- 2. 🌟 ศูนย์บัญชาการ Embeds (แก้ตรงนี้ได้เลย) 🌟 ---
 const BOT_CONFIG = {
-  botName: '🤖 SlipOK Verification Bot',
+  botName: '🪙 Topup Verification Bot',
   botVersion: '1.1.0',
 
   // --- 2.1 Embed หน้า Help / Panel ---
@@ -138,15 +142,24 @@ if (!EXPORT_CHANNEL_ID) {
   console.warn('⚠️ ไม่ได้ตั้งค่า EXPORT_CHANNEL_ID ใน .env (คำสั่ง /export-data จะใช้ไม่ได้)');
 }
 
-// --- 5. ส่งออก ---
+// --- 5. (เพิ่มใหม่) ตรวจสอบ POINT_RATE ---
+if (!process.env.POINT_RATE) {
+  console.warn(
+    `⚠️ ไม่ได้ตั้งค่า POINT_RATE ใน .env, ใช้ค่าเริ่มต้น: ${POINT_RATE}`
+  );
+}
+
+// --- 6. ส่งออก --- (ปรับลำดับเลขจาก 5 เป็น 6)
 module.exports = {
   DISCORD_TOKEN,
   CLIENT_ID,
   PANEL_CHANNEL_ID,
   RCON_CHANNEL_ID,
-  EXPORT_CHANNEL_ID, 
+  EXPORT_CHANNEL_ID,
+  POINT_RATE, // ‹--- (เพิ่มใหม่) ส่งออก POINT_RATE
   DB_CONFIG,
   SLIPOK_CONFIG,
   BOT_CONFIG,
   BANK_NAMES,
 };
+

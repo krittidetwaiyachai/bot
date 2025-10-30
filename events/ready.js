@@ -19,8 +19,26 @@ module.exports = {
 
     try {
       const channel = await client.channels.fetch(PANEL_CHANNEL_ID);
-      
+
       if (channel && channel.isTextBased()) {
+        // --- 1. (ใหม่) ลบ Embed เก่าของบอท ---
+        console.log(`(Panel) กำลังค้นหา Embed เก่าในช่อง ${channel.name}...`);
+        const messages = await channel.messages.fetch({ limit: 50 }); // ดึง 50 ข้อความล่าสุด
+        const botMessages = messages.filter(
+          (msg) => msg.author.id === client.user.id
+        );
+
+        if (botMessages.size > 0) {
+          console.log(
+            `(Panel) พบ ${botMessages.size} Embed เก่า กำลังลบ...`
+          );
+          await channel.bulkDelete(botMessages);
+          console.log('(Panel) ลบ Embed เก่าสำเร็จ');
+        } else {
+          console.log('(Panel) ไม่พบ Embed เก่า');
+        }
+
+        // --- 2. ส่ง Embed ใหม่ ---
         const embed = createHelpEmbed(client);
         await channel.send({ embeds: [embed] });
         console.log(
