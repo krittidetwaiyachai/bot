@@ -1,0 +1,50 @@
+# =========================
+# System / IDE junk
+# =========================
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log
+*.tmp
+*.swp
+
+# =========================
+# Node / Frontend stuff
+# =========================
+node_modules/
+dist/
+build/
+.cache/
+coverage/
+.env
+.env.local
+.env.development
+.env.production
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# =========================
+# Python / Backend stuff
+# =========================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+venv/
+env/
+*.sqlite3
+
+# =========================
+# Editor config files
+# =========================
+.vscode/
+.idea/
+*.code-workspace
+
+# =========================
+# OS trash
+# =========================
+*.bak
+*.old
+*.orig
