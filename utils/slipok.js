@@ -1,8 +1,6 @@
-// /utils/slipok.js
 const axios = require('axios');
 const { SLIPOK_CONFIG } = require('../config');
 
-// ฟังก์ชันตรวจสอบสลิปจากรูปภาพ
 async function verifySlipFromImage(imageUrl, amount = null) {
   try {
     const imageResponse = await axios.get(imageUrl, {
@@ -35,7 +33,6 @@ async function verifySlipFromImage(imageUrl, amount = null) {
   }
 }
 
-// ฟังก์ชันตรวจสอบสลิปจาก QR Code String
 async function verifySlipFromQR(qrString, amount = null) {
   try {
     const body = { data: qrString, log: true };
@@ -61,7 +58,6 @@ async function verifySlipFromQR(qrString, amount = null) {
   }
 }
 
-// ฟังก์ชันตรวจสอบโควตา
 async function checkQuota() {
   try {
     const response = await axios.get(
@@ -72,15 +68,13 @@ async function checkQuota() {
         },
       }
     );
-    // คืนค่า data.data ไปเลย
     return { success: true, data: response.data.data };
   } catch (error) {
-    console.error('Error checking quota:', error);
+    console.error('[System]Error checking quota:', error);
     return { success: false, error: handleError(error) };
   }
 }
 
-// ฟังก์ชันจัดการ Error ของ Axios (ใช้ซ้ำ)
 function handleError(error) {
   if (axios.isAxiosError(error) && error.response) {
     return {

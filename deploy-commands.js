@@ -1,4 +1,3 @@
-// deploy-commands.js
 const fs = require('node:fs');
 const path = require('node:path');
 const { REST } = require('@discordjs/rest');
@@ -21,12 +20,12 @@ const rest = new REST({ version: '10' }).setToken(DISCORD_TOKEN);
 
 (async () => {
   try {
-    console.log('กำลังลงทะเบียน Slash Commands...');
+    console.log('[System] กำลังลงทะเบียน Slash Commands...');
 
     await rest.put(Routes.applicationCommands(CLIENT_ID), { body: commands });
 
-    console.log('✅ ลงทะเบียน Slash Commands สำเร็จ!');
+    console.log('[System] ลงทะเบียน Slash Commands สำเร็จ!');
   } catch (error) {
-    console.error('❌ เกิดข้อผิดพลาด:', error);
+    console.error('[System] เกิดข้อผิดพลาด:', error);
   }
 })();

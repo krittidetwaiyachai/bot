@@ -1,10 +1,8 @@
-// index.js
 const fs = require('node:fs');
 const path = require('node:path');
 const { Client, GatewayIntentBits, Collection } = require('discord.js');
 const { DISCORD_TOKEN } = require('./config');
 
-// ตั้งค่า Discord Bot
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -13,7 +11,6 @@ const client = new Client({
   ],
 });
 
-// --- โหลด Commands ---
 client.commands = new Collection();
 const commandsPath = path.join(__dirname, 'commands');
 const commandFiles = fs
@@ -30,7 +27,6 @@ for (const file of commandFiles) {
   }
 }
 
-// --- โหลด Events ---
 const eventsPath = path.join(__dirname, 'events');
 const eventFiles = fs
   .readdirSync(eventsPath)
@@ -46,5 +42,4 @@ for (const file of eventFiles) {
   }
 }
 
-// เข้าสู่ระบบด้วย Token
 client.login(DISCORD_TOKEN);

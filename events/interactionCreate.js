@@ -1,5 +1,4 @@
-// /events/interactionCreate.js
-const { PANEL_CHANNEL_ID } = require('../config'); // <-- 1. Import Config
+const { PANEL_CHANNEL_ID } = require('../config');
 
 module.exports = {
   name: 'interactionCreate',
@@ -10,30 +9,26 @@ module.exports = {
 
     if (!command) {
       console.error(
-        `ไม่พบคำสั่งที่ตรงกับ ${interaction.commandName}`
+        `[System] Command ไม่พบคำสั่งที่ตรงกับ ${interaction.commandName}`
       );
       return;
     }
 
-    // --- 2. (เพิ่มใหม่) ตรวจสอบช่องสำหรับ /verify ---
     if (
       command.data.name === 'verify' &&
       interaction.channelId !== PANEL_CHANNEL_ID
     ) {
-      // ถ้าเป็นคำสั่ง /verify แต่ไม่ได้ใช้ในช่องที่กำหนด
-
-      // ดึงชื่อช่องที่ถูกต้องมา (เผื่อ ID ผิด)
       let channelName = 'ช่องที่กำหนด';
       try {
         const correctChannel = await interaction.client.channels.fetch(
           PANEL_CHANNEL_ID
         );
         if (correctChannel) {
-          channelName = `<#${correctChannel.id}>`; // ทำให้สามารถคลิกได้
+          channelName = `<#${correctChannel.id}>`;
         }
       } catch (e) {
         console.error(
-          `(Verify Check) ไม่พบ PANEL_CHANNEL_ID ที่ตั้งค่าไว้: ${PANEL_CHANNEL_ID}`
+          `[System] Verify Check ไม่พบ PANEL_CHANNEL_ID ที่ตั้งค่าไว้: ${PANEL_CHANNEL_ID}`
         );
       }
 
@@ -42,7 +37,6 @@ module.exports = {
         ephemeral: true,
       });
     }
-    // --- สิ้นสุดการตรวจสอบ ---
 
     try {
       await command.execute(interaction);

@@ -1,4 +1,3 @@
-// /commands/export-data.js
 const {
   SlashCommandBuilder,
   PermissionsBitField,
@@ -42,7 +41,6 @@ module.exports = {
       });
     }
 
-    // 1. ดึงข้อมูลจาก DB
     const dbResult = await getAllPlayers();
 
     if (!dbResult.success) {
@@ -57,16 +55,13 @@ module.exports = {
     }
 
     try {
-      // 2. แปลงข้อมูลเป็น JSON Buffer (ไฟล์)
       const jsonData = JSON.stringify(dbResult.data, null, 2);
       const buffer = Buffer.from(jsonData, 'utf-8');
 
-      // 3. สร้างไฟล์แนบ
       const attachment = new AttachmentBuilder(buffer, {
         name: 'player_data.export.json',
       });
 
-      // 4. ส่งไฟล์ไปยังช่องที่ล็อกไว้
       await targetChannel.send({
         content: `📦 **Database Export**\nส่งออกข้อมูลผู้เล่นทั้งหมด ${
           dbResult.data.length
@@ -74,12 +69,11 @@ module.exports = {
         files: [attachment],
       });
 
-      // 5. ตอบกลับ (แบบลับ) ว่าสำเร็จ
       await interaction.editReply({
         content: `✅ ส่งออกข้อมูล ${dbResult.data.length} รายการไปยังช่อง ${targetChannel.name} สำเร็จ!`,
       });
     } catch (error) {
-      console.error('❌ (Export) ส่งออกข้อมูลล้มเหลว:', error);
+      console.error('[System] Exporter ส่งออกข้อมูลล้มเหลว:', error);
       await interaction.editReply({
         content: `❌ เกิดข้อผิดพลาดขณะส่งไฟล์: ${error.message}`,
       });
