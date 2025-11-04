@@ -1,5 +1,6 @@
 const { PANEL_CHANNEL_ID } = require('../config');
 const { createHelpEmbed } = require('../utils/embeds');
+const { ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
 
 module.exports = {
   name: 'clientReady',
@@ -36,7 +37,15 @@ module.exports = {
         }
 
         const embed = createHelpEmbed(client);
-        await channel.send({ embeds: [embed] });
+
+        const startButton = new ButtonBuilder()
+          .setCustomId('start_verify')
+          .setLabel('🚀 เริ่มการยืนยัน')
+          .setStyle(ButtonStyle.Success);
+
+        const row = new ActionRowBuilder().addComponents(startButton);
+
+        await channel.send({ embeds: [embed], components: [row] });
         console.log(
           `[System] ส่ง Embed แนะนำการใช้งานไปที่ช่อง ${channel.name} เรียบร้อย`
         );
@@ -50,3 +59,4 @@ module.exports = {
     }
   },
 };
+

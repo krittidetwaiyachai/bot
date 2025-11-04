@@ -1,3 +1,4 @@
 [2025-10-31 02:32:53 (ICT)] User: kaijiieow.zip (ID: 732061002903978004) | Player: KAIJIIEOW | Amount: 10 บาท
 [2025-10-31 02:43:03 (ICT)] User: kaijiieow.zip (ID: 732061002903978004) | Player: KAIJIIEOW | Amount: 5 บาท (-> 10 พ้อย)
 [2025-10-31 02:48:43 (ICT)] User: kaijiieow.zip (ID: 732061002903978004) | Player: KAIJIIEOW | Amount: 3 บาท (-> 30 พ้อย)
+[2025-11-04 18:19:36 (ICT)] User: kaijiieow.zip (ID: 732061002903978004) | Player: KAIJIIEOW | Amount: 1 บาท (-> 100 พ้อย)

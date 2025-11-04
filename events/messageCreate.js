@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { EmbedBuilder } = require('discord.js');
 const { verifySlipFromImage } = require('../utils/slipok');
 const { createSuccessEmbed, createErrorEmbed } = require('../utils/embeds');
 const { getInGameName } = require('../utils/database');
@@ -6,46 +6,46 @@ const {
   RCON_CHANNEL_ID,
   POINT_RATE,
   ADMIN_LOG_CHANNEL_ID,
+  VERIFY_CATEGORY_ID,
 } = require('../config');
 const { logPurchase } = require('../utils/logger');
 
 module.exports = {
-  data: new SlashCommandBuilder()
-    .setName('verify')
-    .setDescription('ตรวจสอบสลิปการโอนเงิน')
-    .addAttachmentOption((option) =>
-      option
-        .setName('slip')
-        .setDescription('รูปภาพสลิปการโอนเงิน')
-        .setRequired(true)
-    ),
+  name: 'messageCreate',
+  async execute(message) {
+    if (message.author.bot) return;
+    if (message.channel.parentId !== VERIFY_CATEGORY_ID) return;
+    if (!message.channel.name.startsWith('verify-')) return;
+    if (message.attachments.size === 0) {
+      return;
+    }
 
-  async execute(interaction) {
-    const attachment = interaction.options.getAttachment('slip');
+    const attachment = message.attachments.first();
 
     if (
       !attachment.contentType ||
       !attachment.contentType.startsWith('image/')
     ) {
-      await interaction.reply({
+      await message.reply({
         content: '❌ กรุณาอัพโหลดไฟล์รูปภาพเท่านั้น (JPG, PNG, JPEG, WEBP)',
-        ephemeral: true,
       });
       return;
     }
 
-    await interaction.deferReply({ ephemeral: true });
+    const processingMsg = await message.reply({
+      content: '🔄 กำลังตรวจสอบสลิปของคุณ...',
+    });
 
     const result = await verifySlipFromImage(attachment.url, null);
 
     if (result.success) {
       const slipData = result.data;
-      const discordId = interaction.user.id;
+      const discordUser = message.author;
       const amount = slipData.amount;
 
       const embed = createSuccessEmbed(slipData);
 
-      const inGameName = await getInGameName(discordId);
+      const inGameName = await getInGameName(discordUser.id);
 
       if (!inGameName) {
         embed.addFields({
@@ -60,7 +60,7 @@ module.exports = {
         });
       } else {
         try {
-          const rconChannel = await interaction.client.channels.fetch(
+          const rconChannel = await message.client.channels.fetch(
             RCON_CHANNEL_ID
           );
 
@@ -82,7 +82,7 @@ module.exports = {
 
           try {
             await logPurchase(
-              interaction.user,
+              discordUser,
               inGameName,
               bahtAmount,
               calculatedPoints
@@ -96,7 +96,7 @@ module.exports = {
 
           if (ADMIN_LOG_CHANNEL_ID) {
             try {
-              const adminLogChannel = await interaction.client.channels.fetch(
+              const adminLogChannel = await message.client.channels.fetch(
                 ADMIN_LOG_CHANNEL_ID
               );
               if (adminLogChannel && adminLogChannel.isTextBased()) {
@@ -106,7 +106,7 @@ module.exports = {
                   .addFields(
                     {
                       name: '👤 ผู้ใช้งาน Discord',
-                      value: `${interaction.user.tag} (\`${interaction.user.id}\`)`,
+                      value: `${discordUser.tag} (\`${discordUser.id}\`)`,
                       inline: false,
                     },
                     {
@@ -144,11 +144,12 @@ module.exports = {
         }
       }
 
-      await interaction.editReply({ embeds: [embed] });
+      await processingMsg.delete();
+      await message.reply({ embeds: [embed] });
     } else {
       const embed = createErrorEmbed(result.error.error || result.error);
-      await interaction.editReply({ embeds: [embed] });
+      await processingMsg.delete();
+      await message.reply({ embeds: [embed] });
     }
   },
 };
-
